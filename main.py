@@ -69,10 +69,9 @@ def play(i = 0, j = 0):
                     grid[ni][nj].click()
                     if face.get_attribute("class") == "facewin":
                         return
-try:
-    play(2,2)
-except:
-    pass
+
+play(2,2)
+
     # alert = driver.switchTo().alert()
     # alert.accept()
 
