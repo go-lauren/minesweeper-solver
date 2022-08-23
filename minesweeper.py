@@ -1,4 +1,3 @@
-from re import L
 import sys
 import time
 
@@ -66,8 +65,6 @@ class Array:
                     continue
                 lst.append((ii, jj))
         return lst
-
-
 class Field(Array):
     def __init__(self, m, n):
         super().__init__(m, n, 0)
@@ -84,7 +81,6 @@ class Field(Array):
                 self.field[ni][nj] += 1
         return self.field
 
-
 class Solution(Array):
     def __init__(self, m, n):
         super().__init__(m, n, -1)
@@ -94,9 +90,9 @@ class Solution(Array):
         self.solution[i][j] = MINE
 
     def next_step(self):
-        reveal_all = []
+        reveal_all = set()
         reveal = []
-        flags = []
+        flags = set()
         unknown_neighbor = {}
         mine_neighbor = {}
         for i in range(self.m):
@@ -106,21 +102,21 @@ class Solution(Array):
                 elif self.solution[i][j] == MINE:
                     continue
                 mines = 0
-                unknowns = []
+                unknowns = set()
                 solution_val = self.solution[i][j]
                 for ni, nj in self.neighbors(i, j):
                     if self.solution[ni][nj] == MINE:
                         mines += 1
                     elif self.solution[ni][nj] == UNKNOWN:
-                        unknowns.append((ni, nj))
+                        unknowns.add((ni, nj))
                 unknown_neighbor[(i, j)] = unknowns
                 mine_neighbor[(i, j)] = mines
 
                 if mines == solution_val:
                     if len(unknowns) > 0:
-                        reveal_all.append((i, j))
+                        reveal_all.add((i, j))
                 elif mines + len(unknowns) == solution_val:
-                    flags += unknowns
+                    flags.update(unknowns)
 
         for i, j in unknown_neighbor.keys():
             solution_val = self.solution[i][j]
