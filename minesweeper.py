@@ -1,3 +1,4 @@
+from re import L
 import sys
 import time
 
@@ -94,7 +95,10 @@ class Solution(Array):
 
     def next_step(self):
         reveal_all = []
+        reveal = []
         flags = []
+        unknown_neighbor = {}
+        mine_neighbor = {}
         for i in range(self.m):
             for j in range(self.n):
                 if self.solution[i][j] == UNKNOWN:
@@ -103,16 +107,41 @@ class Solution(Array):
                     continue
                 mines = 0
                 unknowns = []
+                solution_val = self.solution[i][j]
                 for ni, nj in self.neighbors(i, j):
                     if self.solution[ni][nj] == MINE:
                         mines += 1
                     elif self.solution[ni][nj] == UNKNOWN:
                         unknowns.append((ni, nj))
-                if mines == self.solution[i][j]:
+                unknown_neighbor[(i, j)] = unknowns
+                mine_neighbor[(i, j)] = mines
+
+                if mines == solution_val:
                     if len(unknowns) > 0:
                         reveal_all.append((i, j))
-                elif mines + len(unknowns) == self.solution[i][j]:
+                elif mines + len(unknowns) == solution_val:
                     flags += unknowns
+
+        for i, j in unknown_neighbor.keys():
+            solution_val = self.solution[i][j]
+            if solution_val == MINE or solution_val == UNKNOWN:
+                continue
+            elif (
+                solution_val - mine_neighbor[(i, j)] == 1
+                and len(unknown_neighbor[(i, j)]) == 2
+            ):
+                for ni, nj in self.neighbors(i, j):
+                    pass
+                    # if (
+                    #     self.solution[ni][nj] == UNKNOWN
+                    #     or self.solution[ni][nj] == MINE
+                    # ):
+                    #     continue
+                    # if (
+                    #     unknowns[0] in unknown_neighbor[ni][nj]
+                    #     and unknowns[1] in unknown_neighbor[ni][nj]
+                    # ):
+                    #     pass
         return reveal_all, flags
 
 
