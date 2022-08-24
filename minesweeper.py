@@ -95,9 +95,13 @@ class Solution(Array):
     def set_flag(self, i, j):
         self.solution[i][j] = MINE
 
+    def set_flags(self, flags):
+        for i, j in flags:
+            self.set_flag(i, j)
+
     def next_step(self):
         reveal_all = set()
-        reveal = []
+        reveal = set()
         flags = set()
         unknown_neighbor = {}
         mine_neighbor = {}
@@ -129,22 +133,23 @@ class Solution(Array):
             if solution_val == MINE or solution_val == UNKNOWN:
                 continue
             elif (
-                solution_val - mine_neighbor[(i, j)] == 1
-                and len(unknown_neighbor[(i, j)]) == 2
+                solution_val - mine_neighbor[(i, j)] == 1 # remaining mines 1
+                and len(unknown_neighbor[(i, j)]) == 2 # unknowns 2
             ):
-                for ni, nj in self.neighbors(i, j):
-                    pass
-                    # if (
-                    #     self.solution[ni][nj] == UNKNOWN
-                    #     or self.solution[ni][nj] == MINE
-                    # ):
-                    #     continue
-                    # if (
-                    #     unknowns[0] in unknown_neighbor[ni][nj]
-                    #     and unknowns[1] in unknown_neighbor[ni][nj]
-                    # ):
-                    #     pass
-        return reveal_all, flags
+                neighbors = unknown_neighbor[(i, j)]
+                mutuals = self.neighbors_mutual(list(neighbors))
+                for mi, mj in mutuals:
+                    if not (mi, mj) in unknown_neighbor:
+                        continue
+                    if unknown_neighbor[(mi, mj)].issuperset(neighbors):
+                        remaining_mines = self.solution[mi][mj] - mine_neighbor[(mi, mj)]
+                        remaining_neighbors = unknown_neighbor[((mi, mj))] ^ neighbors
+                        if remaining_mines == 1:
+                            reveal.update(remaining_neighbors)
+                        elif remaining_mines - 1 == len(remaining_neighbors):
+                            flags.update(remaining_neighbors)
+                
+        return reveal_all, flags, reveal
 
 
 class Game:
@@ -171,7 +176,7 @@ class Game:
         self.reveal(i, j)
         self.solution.print()
         while True:
-            reveal_all, flags = self.solution.next_step()
+            reveal_all, flags, reveal = self.solution.next_step()
             if not len(reveal_all) and not len(flags):
                 break
             self.solution.unprint()
@@ -182,6 +187,8 @@ class Game:
                 for ni, nj in self.solution.neighbors(i, j):
                     if self.solution[ni][nj] == UNKNOWN:
                         self.reveal(ni, nj)
+            for i, j in reveal:
+                self.reveal(i, j)
             print("Revealing tiles...")
             self.solution.print()
             time.sleep(0.5)

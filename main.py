@@ -59,7 +59,7 @@ def play(i=0, j=0):
     time.sleep(0.5)
     while True:
         grid_to_array(solution.solution, grid, M, N)
-        reveal_all, flags = solution.next_step()
+        reveal_all, flags, reveal = solution.next_step()
         if not len(reveal_all) and not len(flags):
             break
         print("Flagging field...")
@@ -73,7 +73,8 @@ def play(i=0, j=0):
                     grid[ni][nj].click()
                     if face.get_attribute("class") == "facewin":
                         return
-
+        for i, j in reveal:
+            grid[i][j].click()
 
 play(2, 2)
 
