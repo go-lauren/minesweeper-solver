@@ -191,4 +191,4 @@ class Game:
                 self.reveal(i, j)
             print("Revealing tiles...")
             self.solution.print()
-            time.sleep(0.5)
+            # time.sleep(0.5)

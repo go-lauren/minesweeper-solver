@@ -1,4 +1,6 @@
 # import module
+from itertools import count
+from pickle import FALSE
 import time
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -6,12 +8,20 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver import ActionChains
 
+import argparse
+
 from minesweeper import *
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-m", "--mode", default="beginner")
+
+args = parser.parse_args()
+mode = args.mode
 
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
 
-driver.get("https://www.minesweeperonline.com/#beginner")
-time.sleep(5)
+driver.get("https://www.minesweeperonline.com/#{0}".format(mode))
+time.sleep(2)
 
 classes = {
     "square blank": UNKNOWN,
@@ -27,8 +37,13 @@ classes = {
     "square bombflagged": MINE,
 }
 
-M = 9
-N = 9
+
+modes = {
+    "beginner": (9, 9),
+    "intermediate": (16, 16),
+    "expert": (16, 30)
+}
+M, N = modes[mode]
 
 
 def process_grid(driver, m, n):
@@ -42,6 +57,8 @@ def process_grid(driver, m, n):
 def grid_to_array(array, grid, m, n):
     for i in range(m):
         for j in range(n):
+            if array[i][j] != UNKNOWN:
+                continue
             array[i][j] = classes[grid[i][j].get_attribute("class")]
 
 
@@ -52,9 +69,8 @@ action = ActionChains(driver, 0)
 
 face = driver.find_element(By.ID, "face")
 
-
 def play(i=0, j=0):
-    print("Starting guess at ({0},{1})...".format(i, j))
+    countdown = M*N - 40
     grid[i][j].click()
     time.sleep(0.5)
     while True:
@@ -62,24 +78,34 @@ def play(i=0, j=0):
         reveal_all, flags, reveal = solution.next_step()
         if not len(reveal_all) and not len(flags):
             break
-        print("Flagging field...")
         for i, j in flags:
             solution.set_flag(i, j)
-            action.context_click(grid[i][j]).perform()
-        print("Revealing tiles...")
+            # action.context_click(grid[i][j]).perform()
         for i, j in reveal_all:
             for ni, nj in solution.neighbors(i, j):
                 if solution[ni][nj] == UNKNOWN:
                     grid[ni][nj].click()
-                    if face.get_attribute("class") == "facewin":
-                        return
+                    countdown -= 1
+                    if countdown == 0:
+                        return True
         for i, j in reveal:
             grid[i][j].click()
+            countdown -= 1
+            if countdown == 0:
+                return True
+    return False
 
-play(2, 2)
-
-# alert = driver.switchTo().alert()
-# alert.accept()
-
+wins = 0
+losses = 0
 while True:
-    time.sleep(5)
+    win = play(2,2)
+    if play(2,2):
+        wins += 1
+    else:
+        losses +=1
+        solution.print()
+
+    print("Wins: {0} Losses: {1} Win Rate: {2}".format(wins, losses, wins/ (wins + losses)))
+    solution = Solution(M, N)
+    time.sleep(2)
+    face.click()
