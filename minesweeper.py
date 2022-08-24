@@ -58,14 +58,18 @@ class Array:
             sys.stdout.write("\x1b[2K")
 
     def neighbors(self, i, j, radius=1):
-        lst = []
+        lst = set()
         for ii in range(max(i - radius, 0), min(i + radius + 1, self.m)):
             for jj in range(max(j - radius, 0), min(j + radius + 1, self.n)):
                 if ii == i and jj == j:
                     continue
-                lst.append((ii, jj))
+                lst.add((ii, jj))
         return lst
 
+    def neighbors_mutual(self, locs, radius=1):
+        assert(len(locs) == 2)
+        inter = self.neighbors(locs[0][0], locs[0][1], radius).intersection(self.neighbors(locs[1][0], locs[1][1], radius))
+        return inter
 
 class Field(Array):
     def __init__(self, m, n):
@@ -83,7 +87,6 @@ class Field(Array):
                 self.field[ni][nj] += 1
         return self.field
 
-
 class Solution(Array):
     def __init__(self, m, n):
         super().__init__(m, n, -1)
@@ -93,8 +96,11 @@ class Solution(Array):
         self.solution[i][j] = MINE
 
     def next_step(self):
-        reveal_all = []
-        flags = []
+        reveal_all = set()
+        reveal = []
+        flags = set()
+        unknown_neighbor = {}
+        mine_neighbor = {}
         for i in range(self.m):
             for j in range(self.n):
                 if self.solution[i][j] == UNKNOWN:
@@ -102,17 +108,42 @@ class Solution(Array):
                 elif self.solution[i][j] == MINE:
                     continue
                 mines = 0
-                unknowns = []
+                unknowns = set()
+                solution_val = self.solution[i][j]
                 for ni, nj in self.neighbors(i, j):
                     if self.solution[ni][nj] == MINE:
                         mines += 1
                     elif self.solution[ni][nj] == UNKNOWN:
-                        unknowns.append((ni, nj))
-                if mines == self.solution[i][j]:
+                        unknowns.add((ni, nj))
+                unknown_neighbor[(i, j)] = unknowns
+                mine_neighbor[(i, j)] = mines
+
+                if mines == solution_val:
                     if len(unknowns) > 0:
-                        reveal_all.append((i, j))
-                elif mines + len(unknowns) == self.solution[i][j]:
-                    flags += unknowns
+                        reveal_all.add((i, j))
+                elif mines + len(unknowns) == solution_val:
+                    flags.update(unknowns)
+
+        for i, j in unknown_neighbor.keys():
+            solution_val = self.solution[i][j]
+            if solution_val == MINE or solution_val == UNKNOWN:
+                continue
+            elif (
+                solution_val - mine_neighbor[(i, j)] == 1
+                and len(unknown_neighbor[(i, j)]) == 2
+            ):
+                for ni, nj in self.neighbors(i, j):
+                    pass
+                    # if (
+                    #     self.solution[ni][nj] == UNKNOWN
+                    #     or self.solution[ni][nj] == MINE
+                    # ):
+                    #     continue
+                    # if (
+                    #     unknowns[0] in unknown_neighbor[ni][nj]
+                    #     and unknowns[1] in unknown_neighbor[ni][nj]
+                    # ):
+                    #     pass
         return reveal_all, flags
 
 
