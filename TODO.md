@@ -1,0 +1,2 @@
+- turn into iterator for faster clicking
+- add args for running tests
