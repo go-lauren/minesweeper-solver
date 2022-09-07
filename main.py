@@ -1,6 +1,3 @@
-# import module
-from itertools import count
-from pickle import FALSE
 import time
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -19,6 +16,7 @@ args = parser.parse_args()
 mode = args.mode
 
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+# driver = webdriver.Safari()
 
 driver.get("https://www.minesweeperonline.com/#{0}".format(mode))
 time.sleep(2)
@@ -39,11 +37,11 @@ classes = {
 
 
 modes = {
-    "beginner": (9, 9),
-    "intermediate": (16, 16),
-    "expert": (16, 30)
+    "beginner": (9, 9, 10),
+    "intermediate": (16, 16, 40),
+    "expert": (16, 30, 99)
 }
-M, N = modes[mode]
+M, N, F = modes[mode]
 
 
 def process_grid(driver, m, n):
@@ -68,11 +66,17 @@ solution = Solution(M, N)
 action = ActionChains(driver, 0)
 
 face = driver.find_element(By.ID, "face")
+def remaining_unknown(grid):
+    unknown_remaining = 0
+    for row in grid:
+        for tile in row:
+            if tile == UNKNOWN:
+                unknown_remaining += 1
+    return unknown_remaining
 
 def play(i=0, j=0):
-    countdown = M*N - 40
     grid[i][j].click()
-    time.sleep(0.5)
+    grid_to_array(solution.solution, grid, M, N)
     while True:
         grid_to_array(solution.solution, grid, M, N)
         reveal_all, flags, reveal = solution.next_step()
@@ -80,30 +84,25 @@ def play(i=0, j=0):
             break
         for i, j in flags:
             solution.set_flag(i, j)
-            # action.context_click(grid[i][j]).perform()
         for i, j in reveal_all:
             for ni, nj in solution.neighbors(i, j):
                 if solution[ni][nj] == UNKNOWN:
                     grid[ni][nj].click()
-                    countdown -= 1
-                    if countdown == 0:
-                        return True
         for i, j in reveal:
             grid[i][j].click()
-            countdown -= 1
-            if countdown == 0:
-                return True
     return False
 
 wins = 0
 losses = 0
 while True:
-    win = play(2,2)
-    if play(2,2):
-        wins += 1
-    else:
+    try:
+        play(2,2)
         losses +=1
         solution.print()
+    except:
+        wins += 1
+        # alert = driver.switch_to.alert
+        # alert.accept()
 
     print("Wins: {0} Losses: {1} Win Rate: {2}".format(wins, losses, wins/ (wins + losses)))
     solution = Solution(M, N)

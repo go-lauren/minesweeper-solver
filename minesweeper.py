@@ -133,9 +133,10 @@ class Solution(Array):
             if solution_val == MINE or solution_val == UNKNOWN:
                 continue
             elif (
-                solution_val - mine_neighbor[(i, j)] == 1 # remaining mines 1
-                and len(unknown_neighbor[(i, j)]) == 2 # unknowns 2
+                solution_val - mine_neighbor[(i, j)]  + 1 == len(unknown_neighbor[(i, j)]) # remaining mines 1
             ):
+                if not len(unknown_neighbor[(i, j)]) == 2:
+                    continue
                 neighbors = unknown_neighbor[(i, j)]
                 mutuals = self.neighbors_mutual(list(neighbors))
                 for mi, mj in mutuals:
